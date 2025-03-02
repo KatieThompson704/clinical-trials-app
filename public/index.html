@@ -3,33 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Clinical Trials</title>
+    <title>Clinical Trials Dashboard</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-    <h1>Clinical Trials Data</h1>
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search by trial name or sponsor"
-    />
-    <select id="sortSelect">
-      <option value="asc">Sort A-Z</option>
-      <option value="desc">Sort Z-A</option>
-    </select>
+    <h1>Clinical Trials Dashboard</h1>
 
+    <h2>Search Patients by Clinical Trial</h2>
+    <input type="text" id="trialSearch" placeholder="Enter Trial ID" />
+    <button onclick="searchPatients()">Search</button>
+
+    <ul id="patientList"></ul>
+
+    <h2>Add a New Patient</h2>
+    <form id="patientForm">
+      <input type="text" id="name" placeholder="Patient Name" required />
+      <input type="number" id="age" placeholder="Age" required />
+      <select id="gender">
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="text" id="condition" placeholder="Medical Condition" />
+      <input type="number" id="trialId" placeholder="Trial ID" />
+      <button type="submit">Add Patient</button>
+    </form>
+    <p id="statusMessage"></p>
+    <h2>Patient Age Distribution</h2>
+
+    <canvas id="ageChart"></canvas>
+
+    <h2>All Clinical Trials</h2>
     <table id="trialsTable">
       <thead>
         <tr>
           <th>Trial ID</th>
           <th>Trial Name</th>
           <th>Sponsor</th>
+          <th>Phase</th>
+          <th>Status</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Data will be inserted here by JavaScript -->
-      </tbody>
+      <tbody></tbody>
     </table>
+
+    <h2>Patients</h2>
+    <table id="patientsTable">
+      <thead>
+        <tr>
+          <th>Patient ID</th>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Medical Condition</th>
+          <th>Trial ID</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
     <script src="index.js"></script>
   </body>
 </html>
