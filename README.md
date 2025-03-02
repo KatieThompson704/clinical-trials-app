@@ -279,12 +279,6 @@ You should see the **clinical trials table populated with MySQL data!** 🎉
 
 ---
 
-## 🚀 **Next Steps**
-
-✅ Add CRUD (Create, Read, Update, Delete) API.  
-✅ Implement search & filtering.  
-✅ Deploy backend using **Heroku/Railway** & frontend using **Vercel/Netlify**.
-
 ---
 
 ## 🛠 **Troubleshooting**
