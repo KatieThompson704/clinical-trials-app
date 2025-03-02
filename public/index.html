@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clinical Trials</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Clinical Trials Data</h1>
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search by trial name or sponsor"
+    />
+    <select id="sortSelect">
+      <option value="asc">Sort A-Z</option>
+      <option value="desc">Sort Z-A</option>
+    </select>
+
+    <table id="trialsTable">
+      <thead>
+        <tr>
+          <th>Trial ID</th>
+          <th>Trial Name</th>
+          <th>Sponsor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data will be inserted here by JavaScript -->
+      </tbody>
+    </table>
+    <script src="index.js"></script>
+  </body>
+</html>
