@@ -189,7 +189,11 @@ button[type="submit"]:hover {
   text-align: center;
 }
 
-/* 💡 Responsive Design */
+.chart-box canvas {
+  max-width: 100%;
+  height: auto;
+}
+
 @media (max-width: 768px) {
   .charts {
     flex-direction: column;
