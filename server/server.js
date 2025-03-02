@@ -28,6 +28,15 @@ app.get("/trials", (req, res) => {
   });
 });
 
+// ✅ Get Patients by Trial ID (Search Functionality)
+app.get("/patients/trial/:trial_id", (req, res) => {
+  const sql = "SELECT * FROM patients WHERE trial_id = ?";
+  db.query(sql, [req.params.trial_id], (err, result) => {
+    if (err) return res.status(500).send(err);
+    res.json(result);
+  });
+});
+
 // ✅ Get All Patients with Filtering for Charts
 app.get("/patients", (req, res) => {
   let sql = "SELECT * FROM patients WHERE 1=1";
@@ -97,6 +106,59 @@ app.get("/stats/age-groups", (req, res) => {
       return res.status(500).json({ error: "Database error", details: err });
     res.json(result);
   });
+});
+
+// ✅ Get Adverse Events by Severity with Filtering
+app.get("/stats/adverse-events", (req, res) => {
+  let sql = `
+    SELECT severity, COUNT(*) AS count
+    FROM adverse_events
+    WHERE 1=1
+  `;
+  let params = [];
+
+  if (req.query.sponsor) {
+    sql +=
+      " AND trial_id IN (SELECT trial_id FROM clinical_trials WHERE sponsor = ?)";
+    params.push(req.query.sponsor);
+  }
+  if (req.query.phase) {
+    sql +=
+      " AND trial_id IN (SELECT trial_id FROM clinical_trials WHERE phase = ?)";
+    params.push(req.query.phase);
+  }
+  if (req.query.condition) {
+    sql +=
+      " AND patient_id IN (SELECT patient_id FROM patients WHERE medical_condition = ?)";
+    params.push(req.query.condition);
+  }
+
+  sql +=
+    " GROUP BY severity ORDER BY FIELD(severity, 'Mild', 'Moderate', 'Severe');";
+
+  db.query(sql, params, (err, result) => {
+    if (err)
+      return res.status(500).json({ error: "Database error", details: err });
+    res.json(result);
+  });
+});
+
+// ✅ Add a New Patient
+app.post("/patients", (req, res) => {
+  const { name, age, gender, medical_condition, trial_id } = req.body;
+  if (!name || !age || !gender)
+    return res.status(400).json({ error: "Missing required fields" });
+
+  const sql =
+    "INSERT INTO patients (name, age, gender, medical_condition, trial_id) VALUES (?, ?, ?, ?, ?)";
+  db.query(
+    sql,
+    [name, age, gender, medical_condition, trial_id],
+    (err, result) => {
+      if (err) return res.status(500).send(err);
+      res.json({ message: "Patient added successfully!", id: result.insertId });
+    }
+  );
 });
 
 /* ✅ Start Server */

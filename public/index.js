@@ -5,6 +5,71 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCharts(); // Initialize Charts with full dataset
 });
 
+// ✅ Search for Patients by Clinical Trial
+function searchPatients() {
+  const trialId = document.getElementById("trialSearch").value;
+  if (!trialId) {
+    alert("Please enter a trial ID!");
+    return;
+  }
+
+  fetch(`/patients/trial/${trialId}`)
+    .then((response) => response.json())
+    .then((data) => {
+      const resultsBox = document.getElementById("searchResults");
+      const title = document.getElementById("searchTitle");
+      const list = document.getElementById("patientList");
+
+      list.innerHTML = ""; // Clear previous results
+      resultsBox.classList.remove("hidden");
+
+      if (data.length > 0) {
+        title.textContent = `${data.length} Patients Enrolled in Trial ${trialId}`;
+        data.forEach((patient) => {
+          const item = document.createElement("li");
+          // ✅ Fix: Remove manually assigned numbering
+          item.textContent = `${patient.name} (Age: ${patient.age}, Condition: ${patient.medical_condition})`;
+          list.appendChild(item);
+        });
+      } else {
+        title.textContent =
+          "No Patients Currently in this Trial. Add Patients Below";
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching patients:", error);
+      document.getElementById("searchTitle").textContent = "No Match to Trial";
+      document.getElementById("searchResults").classList.remove("hidden");
+    });
+}
+
+// ✅ Add a new patient
+document
+  .getElementById("patientForm")
+  .addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const newPatient = {
+      name: document.getElementById("name").value,
+      age: document.getElementById("age").value,
+      gender: document.getElementById("gender").value,
+      medical_condition: document.getElementById("condition").value,
+      trial_id: document.getElementById("trialId").value || null,
+    };
+
+    fetch("http://localhost:5000/patients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newPatient),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("statusMessage").textContent = data.message;
+        document.getElementById("patientForm").reset();
+      })
+      .catch((error) => console.error("Error adding patient:", error));
+  });
+
 // ✅ Fetch data from the server and populate tables
 function fetchData(endpoint, tableId) {
   fetch(`http://localhost:5000/${endpoint}`)
@@ -33,11 +98,13 @@ function populateTable(data, tableId) {
 document
   .getElementById("sponsorFilter")
   .addEventListener("change", updateCharts);
+
 document.getElementById("phaseFilter").addEventListener("change", updateCharts);
 document
   .getElementById("conditionFilter")
   .addEventListener("change", updateCharts);
 
+// ✅ Update Charts using Applied Filters
 function updateCharts() {
   const sponsor = document.getElementById("sponsorFilter").value;
   const phase = document.getElementById("phaseFilter").value;
@@ -50,14 +117,43 @@ function updateCharts() {
 
   const queryString = queryParams.length ? `?${queryParams.join("&")}` : "";
 
-  // Fetch updated data for charts only (not affecting tables)
+  // ✅ Fetch Age Distribution Data
   fetch(`/stats/age-groups${queryString}`)
     .then((response) => response.json())
     .then((data) => updateAgeChart(data));
 
+  // ✅ Fetch Gender Distribution Data
   fetch(`/patients${queryString}`)
     .then((response) => response.json())
     .then((data) => updateGenderChart(data));
+
+  // ✅ Fetch Adverse Events Data
+  fetch(`/stats/adverse-events${queryString}`)
+    .then((response) => response.json())
+    .then((data) => updateAdverseEventsChart(data));
+}
+
+// ✅ Update Age Distribution Chart
+function updateAgeChart(data) {
+  const ageGroups = data.reduce(
+    (acc, group) => {
+      acc[group.age_group] = group.count;
+      return acc;
+    },
+    {
+      "0-25": 0,
+      "26-35": 0,
+      "36-45": 0,
+      "46-55": 0,
+      "56-65": 0,
+      "66-75": 0,
+      "76+": 0,
+    }
+  );
+
+  ageChart.data.labels = Object.keys(ageGroups);
+  ageChart.data.datasets[0].data = Object.values(ageGroups);
+  ageChart.update();
 }
 
 // ✅ Update Age Distribution Chart
@@ -96,6 +192,16 @@ function updateGenderChart(patients) {
   genderChart.update();
 }
 
+// ✅ Update Adverse Events Chart
+function updateAdverseEventsChart(data) {
+  const labels = data.map((event) => event.severity);
+  const counts = data.map((event) => event.count);
+
+  adverseEventsChart.data.labels = labels;
+  adverseEventsChart.data.datasets[0].data = counts;
+  adverseEventsChart.update();
+}
+
 // ✅ Initialize ChartJS Charts
 const ctxAge = document.getElementById("ageChart").getContext("2d");
 const ageChart = new Chart(ctxAge, {
@@ -132,7 +238,7 @@ const genderChart = new Chart(ctxGender, {
     datasets: [
       {
         label: "Gender Distribution",
-        backgroundColor: ["#2ecc71", "#e74c3c", "#9b59b6"],
+        backgroundColor: ["#6A8CAF", "#E8A2A8", "#B0B0B0"],
         data: [],
       },
     ],
@@ -145,6 +251,61 @@ const genderChart = new Chart(ctxGender, {
   },
 });
 
+// ✅ Initialize Adverse Events Chart
+const ctxAdverseEvents = document
+  .getElementById("adverseEventsChart")
+  .getContext("2d");
+const adverseEventsChart = new Chart(ctxAdverseEvents, {
+  type: "bar",
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: "Adverse Events",
+        backgroundColor: ["#f1c40f", "#e67e22", "#e74c3c"],
+        borderColor: ["#f39c12", "#d35400", "#c0392b"],
+        borderWidth: 1,
+        data: [],
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    indexAxis: "y", // ✅ Makes it a horizontal bar chart
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: true },
+      datalabels: {
+        // ✅ Display data labels on bars
+        anchor: "end",
+        align: "right",
+        formatter: (value) => value,
+        font: { weight: "bold" },
+      },
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        title: { display: true, text: "Total Events" },
+      },
+      y: {
+        title: { display: true, text: "Severity" },
+      },
+    },
+  },
+});
+
 // ✅ Fetch full data for tables on page load
 fetchData("trials", "trialsTable");
 fetchData("patients", "patientsTable");
+// ✅ Load adverse events data when filters change or page loads
+document.addEventListener("DOMContentLoaded", updateCharts);
+// Ensure the search runs on "Enter" key press
+document
+  .getElementById("trialSearch")
+  .addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault(); // Prevents form submission if inside a form
+      searchPatients(); // Call search function
+    }
+  });
