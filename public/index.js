@@ -1,20 +1,22 @@
 // ✅ Load data on page load
 document.addEventListener("DOMContentLoaded", () => {
-  fetchData("trials", "trialsTable");
-  fetchData("patients", "patientsTable");
+  fetchData("trials", "trialsTable"); // Load Clinical Trials Table
+  fetchData("patients", "patientsTable"); // Load Patients Table
+  updateCharts(); // Initialize Charts with full dataset
 });
 
-// ✅ Fetch data from the server
+// ✅ Fetch data from the server and populate tables
 function fetchData(endpoint, tableId) {
   fetch(`http://localhost:5000/${endpoint}`)
     .then((response) => response.json())
     .then((data) => populateTable(data, tableId))
     .catch((error) => console.error(`Error loading ${endpoint}:`, error));
 }
-// ✅ Populate the table
+
+// ✅ Populate Tables Dynamically
 function populateTable(data, tableId) {
   const tableBody = document.querySelector(`#${tableId} tbody`);
-  tableBody.innerHTML = "";
+  tableBody.innerHTML = ""; // Clear existing data
 
   data.forEach((row) => {
     const tr = document.createElement("tr");
@@ -27,85 +29,122 @@ function populateTable(data, tableId) {
   });
 }
 
-function searchPatients() {
-  const trialId = document.getElementById("trialSearch").value;
-  if (!trialId) {
-    alert("Please enter a trial ID!");
-    return;
-  }
-
-  // ✅ Fetch Patients by Trial ID
-  fetch(`http://localhost:5000/patients/trial/${trialId}`)
-    .then((response) => response.json())
-    .then((data) => {
-      const list = document.getElementById("patientList");
-      list.innerHTML = ""; // Clear previous results
-      data.forEach((patient) => {
-        const item = document.createElement("li");
-        item.textContent = `${patient.name} (Age: ${patient.age}, Condition: ${patient.medical_condition})`;
-        list.appendChild(item);
-      });
-    })
-    .catch((error) => console.error("Error fetching patients:", error));
-}
-// ✅ Add a new patient
+// ✅ Update Charts When Filters Change
 document
-  .getElementById("patientForm")
-  .addEventListener("submit", function (event) {
-    event.preventDefault();
+  .getElementById("sponsorFilter")
+  .addEventListener("change", updateCharts);
+document.getElementById("phaseFilter").addEventListener("change", updateCharts);
+document
+  .getElementById("conditionFilter")
+  .addEventListener("change", updateCharts);
 
-    const newPatient = {
-      name: document.getElementById("name").value,
-      age: document.getElementById("age").value,
-      gender: document.getElementById("gender").value,
-      medical_condition: document.getElementById("condition").value,
-      trial_id: document.getElementById("trialId").value || null,
-    };
+function updateCharts() {
+  const sponsor = document.getElementById("sponsorFilter").value;
+  const phase = document.getElementById("phaseFilter").value;
+  const condition = document.getElementById("conditionFilter").value;
 
-    fetch("http://localhost:5000/patients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newPatient),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        document.getElementById("statusMessage").textContent = data.message;
-        document.getElementById("patientForm").reset();
-      })
-      .catch((error) => console.error("Error adding patient:", error));
+  let queryParams = [];
+  if (sponsor) queryParams.push(`sponsor=${sponsor}`);
+  if (phase) queryParams.push(`phase=${phase}`);
+  if (condition) queryParams.push(`condition=${condition}`);
+
+  const queryString = queryParams.length ? `?${queryParams.join("&")}` : "";
+
+  // Fetch updated data for charts only (not affecting tables)
+  fetch(`/stats/age-groups${queryString}`)
+    .then((response) => response.json())
+    .then((data) => updateAgeChart(data));
+
+  fetch(`/patients${queryString}`)
+    .then((response) => response.json())
+    .then((data) => updateGenderChart(data));
+}
+
+// ✅ Update Age Distribution Chart
+function updateAgeChart(data) {
+  const ageGroups = data.reduce(
+    (acc, group) => {
+      acc[group.age_group] = group.count;
+      return acc;
+    },
+    {
+      "0-25": 0,
+      "26-35": 0,
+      "36-45": 0,
+      "46-55": 0,
+      "56-65": 0,
+      "66-75": 0,
+      "76+": 0,
+    }
+  );
+
+  ageChart.data.labels = Object.keys(ageGroups);
+  ageChart.data.datasets[0].data = Object.values(ageGroups);
+  ageChart.update();
+}
+
+// ✅ Update Gender Distribution Chart
+function updateGenderChart(patients) {
+  const genderCounts = { Male: 0, Female: 0, Other: 0 };
+
+  patients.forEach((patient) => {
+    genderCounts[patient.gender]++;
   });
 
-// ✅ Load the age chart
-function loadAgeChart() {
-  fetch("http://localhost:5000/stats/age")
-    .then((response) => response.json())
-    .then((data) => {
-      const ages = data.map((entry) => entry.age);
-      const counts = data.map((entry) => entry.count);
-
-      new Chart(document.getElementById("ageChart"), {
-        type: "bar",
-        data: {
-          labels: ages,
-          datasets: [
-            {
-              label: "Number of Patients",
-              data: counts,
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "rgba(75, 192, 192, 1)",
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true },
-          },
-        },
-      });
-    })
-    .catch((error) => console.error("Error loading chart:", error));
+  genderChart.data.labels = Object.keys(genderCounts);
+  genderChart.data.datasets[0].data = Object.values(genderCounts);
+  genderChart.update();
 }
 
-// Load the chart on page load
-document.addEventListener("DOMContentLoaded", loadAgeChart);
+// ✅ Initialize ChartJS Charts
+const ctxAge = document.getElementById("ageChart").getContext("2d");
+const ageChart = new Chart(ctxAge, {
+  type: "bar",
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: "Patient Age Distribution",
+        backgroundColor: "#3498db",
+        borderColor: "#2980b9",
+        borderWidth: 1,
+        data: [],
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+    },
+    scales: {
+      x: { title: { display: true, text: "Age Group" } },
+      y: { title: { display: true, text: "Number of Patients" } },
+    },
+  },
+});
+
+const ctxGender = document.getElementById("genderChart").getContext("2d");
+const genderChart = new Chart(ctxGender, {
+  type: "pie",
+  data: {
+    labels: ["Male", "Female", "Other"],
+    datasets: [
+      {
+        label: "Gender Distribution",
+        backgroundColor: ["#2ecc71", "#e74c3c", "#9b59b6"],
+        data: [],
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: "bottom" },
+    },
+  },
+});
+
+// ✅ Fetch full data for tables on page load
+fetchData("trials", "trialsTable");
+fetchData("patients", "patientsTable");

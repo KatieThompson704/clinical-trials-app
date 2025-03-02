@@ -10,29 +10,104 @@
   <body>
     <h1>Clinical Trials Dashboard</h1>
 
-    <h2>Search Patients by Clinical Trial</h2>
-    <input type="text" id="trialSearch" placeholder="Enter Trial ID" />
-    <button onclick="searchPatients()">Search</button>
+    <div class="container">
+      <!-- 📌 Search Patients Section -->
+      <div class="search-panel">
+        <h2>Search Patients by Clinical Trial</h2>
+        <div class="search-bar">
+          <input type="text" id="trialSearch" placeholder="Enter Trial ID" />
+          <button onclick="searchPatients()">🔍 Search</button>
+        </div>
 
-    <ul id="patientList"></ul>
+        <!-- 📌 Search Results Container (Initially Hidden) -->
+        <div id="searchResults" class="results-box hidden">
+          <h3 id="searchTitle"></h3>
+          <ol id="patientList"></ol>
+        </div>
+      </div>
 
-    <h2>Add a New Patient</h2>
-    <form id="patientForm">
-      <input type="text" id="name" placeholder="Patient Name" required />
-      <input type="number" id="age" placeholder="Age" required />
-      <select id="gender">
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-      </select>
-      <input type="text" id="condition" placeholder="Medical Condition" />
-      <input type="number" id="trialId" placeholder="Trial ID" />
-      <button type="submit">Add Patient</button>
-    </form>
-    <p id="statusMessage"></p>
-    <h2>Patient Age Distribution</h2>
+      <!-- 📌 Add a New Patient Section -->
+      <div class="form-panel">
+        <h2>Add a New Patient</h2>
+        <form id="patientForm">
+          <div class="input-group">
+            <input type="text" id="name" placeholder="Patient Name" required />
+            <input type="number" id="age" placeholder="Age" required />
+          </div>
+          <div class="input-group">
+            <select id="gender">
+              <option disabled selected>Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            <select id="condition">
+              <option disabled selected>Medical Condition</option>
+              <option value="Diabetes">Diabetes</option>
+              <option value="Heart Disease">Heart Disease</option>
+              <option value="Cancer">Cancer</option>
+              <option value="Arthritis">Arthritis</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <input type="number" id="trialId" placeholder="Trial ID" />
+          </div>
+          <button type="submit">➕ Add Patient</button>
+        </form>
+        <p id="statusMessage"></p>
+      </div>
+    </div>
 
-    <canvas id="ageChart"></canvas>
+    <!-- 📌 Filter & Charts Container -->
+    <div class="filter-chart-container">
+      <div class="filter-chart-title-section">
+        <h2>Filter Clinical Trial Metrics</h2>
+      </div>
+      <!-- 📌 Filters -->
+      <div class="chart-filters">
+        <div class="filters">
+          <label for="sponsorFilter">Sponsor:</label>
+          <select id="sponsorFilter">
+            <option value="">All Sponsors</option>
+            <option value="BioCorp">BioCorp</option>
+            <option value="MedLife">MedLife</option>
+            <option value="PharmaX">PharmaX</option>
+            <option value="PharmaY">PharmaY</option>
+            <option value="PharmaZ">PharmaZ</option>
+          </select>
+
+          <label for="phaseFilter">Trial Phase:</label>
+          <select id="phaseFilter">
+            <option value="">All Phases</option>
+            <option value="Phase 1">Phase 1</option>
+            <option value="Phase 2">Phase 2</option>
+            <option value="Phase 3">Phase 3</option>
+            <option value="Phase 4">Phase 4</option>
+          </select>
+
+          <label for="conditionFilter">Medical Condition:</label>
+          <select id="conditionFilter">
+            <option value="">All Conditions</option>
+            <option value="Diabetes">Diabetes</option>
+            <option value="Heart Disease">Heart Disease</option>
+            <option value="Cancer">Cancer</option>
+            <option value="Arthritis">Arthritis</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 📌 Charts -->
+      <div class="charts">
+        <div class="chart-box">
+          <h2>Patient Age Distribution</h2>
+          <canvas id="ageChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h2>Patient Gender Distribution</h2>
+          <canvas id="genderChart"></canvas>
+        </div>
+      </div>
+    </div>
 
     <h2>All Clinical Trials</h2>
     <table id="trialsTable">
@@ -48,7 +123,7 @@
       <tbody></tbody>
     </table>
 
-    <h2>Patients</h2>
+    <h2>All Patients</h2>
     <table id="patientsTable">
       <thead>
         <tr>
